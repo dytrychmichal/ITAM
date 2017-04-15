@@ -2,10 +2,20 @@
 
 class SQL
 {
+	public function getTypeID($name)
+	{
+		  require ('db.php');
+		  $stmt = $db->prepare("select id from itam.asset_type where name = :na");   
+		  $stmt->execute(array(':na' => $name));
+		  $costcenters = $stmt->fetchColumn();
+		  
+		  return $costcenters;
+	}
+	
 	public function getCostcenters()
 	{
 		  require ('db.php');
-		  $stmt = $db->prepare("select name,  code from itam.costcenter order by code");   
+		  $stmt = $db->prepare("select name,  code from itam.costcenter order by name");   
 		  $stmt->execute();
 		  $costcenters = $stmt->fetchAll();
 		  
@@ -32,6 +42,18 @@ class SQL
 		  return $manufacturers;
 	}
 	
+	public function getUsersActiveJson()
+	{
+		  require ('db.php');
+		  $stmt = $db->prepare("select name, surname, sso from itam.user 
+								where active_to is null order by name");   
+		  $stmt->execute();
+		  $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		  $json = json_encode($users);
+		  
+		  return $json;
+	}
+	
 	public function getSuppliers()
 	{
 		  require ('db.php');
@@ -41,7 +63,43 @@ class SQL
 		  
 		  return $suppliers;
 	}
-		
+	
+	public function getHW()
+	{
+		  require ('db.php');
+		  $stmt = $db->prepare("select A.inventory_number, AT.name as asset_type, M.name as manufacturer_name, A.model, A.serial, U.name as owner_name, U.surname as owner_surname, O.user_id as owner_id, S.name as supplier_name, A.po, A.date_supplied, O.signed, A.note, O.created_by
+								from itam.asset A
+								join itam.asset_type AT on A.type_id=AT.id
+								join itam.manufacturer M on A.manufacturer_id=M.id
+								left join itam.supplier S on A.supplier_id=S.id
+								left join itam.ownership O on A.id=O.asset_id
+								left join itam.user U on O.user_id=U.sso
+                                where O.from_user is null or O.id is null
+								order by A.id;");   
+		  $stmt->execute();
+		  $hw = $stmt->fetchAll();
+		  
+		  return $hw;
+	}
+	
+	public function getOwnerships()
+	{
+		  require ('db.php');
+		  $stmt = $db->prepare("select O.id, o.date_created, ASS.inventory_number, ASS.model, ASS.serial, M.name as m_name, N.name as n_name, N.surname as n_surname, N.sso as n_sso,
+								L.name as l_name, L.surname as l_surname, L.sso as l_sso, C.name as c_name, C.surname as c_surname
+								from itam.ownership O  left join itam.asset A on O.asset_id=A.id
+								join itam.asset ASS on O.asset_id=ASS.id
+								join itam.manufacturer M on ASS.manufacturer_id=M.id
+								join itam.user N on O.user_id=N.sso
+								left join itam.user L on O.from_user=L.sso
+								join itam.user C on O.created_by=C.sso
+								order by O.id;");   
+		  $stmt->execute();
+		  $ownerships = $stmt->fetchAll();
+		  
+		  return $ownerships;
+	}
+	
 	public function addUser($name, $surname, $sso)
 	{
 		  require ('db.php');
@@ -100,25 +158,65 @@ class SQL
 		  
 	}
 
-	
-	public function addHW($ownership, $type, $manufacturer, $model, $serial, $supplier, $date, $note)
+	public function addHW($inv, $type, $manufacturer, $model, $serial, $supplier, $po, $date, $note)
 	{
 		  require ('db.php');
 		  try
 		  {
-			//get type id
+			//get type id - can get the IDs because NAME is unique
+			$stmtT = $db->prepare("select id from itam.asset_type where name = :na");   
+			$stmtT->execute(array(':na' => $type));
+			$tID = $stmtT->fetchColumn();
+			
 			//get manufacturer id
-			$stmt = $db->prepare("insert into itam.asset (name) values(:na)");   
-			$stmt->execute(array(':na' => $name));
+			$stmtM = $db->prepare("select id from itam.manufacturer where name = :na");   
+			$stmtM->execute(array(':na' => $manufacturer));
+			$mID = $stmtM->fetchColumn();
+			
+			//get supplier id
+			$stmtS = $db->prepare("select id from itam.supplier where name = :na");   
+			$stmtS->execute(array(':na' => $supplier));
+			$sID = $stmtS->fetchColumn();
+
+			//and now for the insertion
+			$stmt = $db->prepare("insert into itam.asset (inventory_number, type_id, manufacturer_id, model, serial, date_supplied, note, supplier_id, po) values(:inv, :type, :manuf, :model, :serial, :date, :note, :supp, :po)");   
+			$stmt->execute(array(':inv' => $inv, ':type' => $tID,  ':manuf' => $mID,  ':model' => $model, ':serial' => $serial, ':date' => $date, ':note' => $note, ':supp' => $sID, ':po' => $po));
 		  }
 		  catch (PDOException $e)
 		  {
-			echo $e->getMessage();
+			echo 'AddHW '. $e->getMessage();
 			return;
 		  }
 		  echo 'Inserted successfully';
 		  
 	}
 
+	public function addOwnershipNew($sso, $note)
+	{
+		require ('db.php');
+		try
+		{
+			//get asset id - last id in asset table
+			$stmtA = $db->prepare("select max(id) from itam.asset");
+			$stmtA->execute();
+			$aID = $stmtA->fetchColumn();
+			
+			//get author SSO
+			$author = '212586720';
+			
+			//echo $aID . '|' . date('Y-m-d') . '|'  . $note . '|' . $author . '|'. $sso;
+			
+			//and now for the insertion
+			$stmt = $db->prepare("insert into itam.ownership (asset_id, date_created, note, user_id, created_by) values(:asset, :date, :note, :user, :author)");   
+			$stmt->execute(array(':asset' => $aID, ':date' => date('Y-m-d'), ':note' => $note, ':user' => $sso, ':author' => $author));
+		}
+		catch (PDOException $e)
+		{
+			echo $e->getMessage();
+			return;
+		}
+		echo 'Inserted successfully';
+		  
+	}
 }
 

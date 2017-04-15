@@ -12,6 +12,7 @@ require_once('classes/sql.php');
 $sql = new SQL();
 $CCs = $sql->getCostcenters();
 
+
 /*$verify=new verify();
 $sql = new SQL();
 */
@@ -52,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		<select>
 			<?php foreach($CCs as $CC)
 			{
-				echo '<option value="'.$CC['name'].'">'.$CC['code'].' - '.$CC['name'].'</option>';
+				echo '<option value="'.$CC['name'].'">'.$CC['name'].' - '.$CC['code'].'</option>';
 			}
 			?>
 		</select>

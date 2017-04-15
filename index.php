@@ -6,6 +6,8 @@ session_start();
 // You can store as much data as you like within in sessions. All sessions are stored on the server. The only limits you can reach is the maximum memory a script can consume at one time, which by default is 128MB.
 //http://stackoverflow.com/questions/217420/ideal-php-session-size
 
+date_default_timezone_set('Europe/Prague');
+
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
@@ -13,10 +15,10 @@ $sql = new SQL();
 $assetTypes = $sql->getTypes();
 $assetManufacturers = $sql->getManufacturers();
 $assetSuppliers = $sql->getSuppliers();
+$hw = $sql->getHW();
 
 $emptyCols = 5;		//determines how many empty columns there will be on the bottom of the table
 
-print_r(array_values($assetManufacturers));
 
 function findSQLArray($arr, $n, $i)		//returns true if $_POST[$n][$i] exists in PostgreSQL Array $arr
 {	
@@ -31,12 +33,10 @@ function findSQLArray($arr, $n, $i)		//returns true if $_POST[$n][$i] exists in 
 	return false;
 }
 
-
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	//var_dump($_POST);
 	echo "<br>";
-	for($i = 1 ; $i <= $emptyCols ; $i++)
+	for($i = 0 ; $i < $emptyCols ; $i++)
 	{
 		if($_POST['manufacturer'][$i] != null && $_POST['model'][$i] != null && $_POST['serial'][$i] != null && $_POST['supplier'][$i] != null && $_POST['date_supplied'][$i] != null) //check if all required values are present
 		{
@@ -55,16 +55,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				$assetSuppliers = $sql->getSuppliers();						//and refresh list of suppliers
 			}
 			
-			if($_POST['PO'][$i] != null) //finish this
+			$date = DateTime::createFromFormat('m.d.Y', $_POST['date_supplied'][$i]);
+			$dateSQL = $date->format('Y-m-d');
+			
+			
+			//echo 'inserting '. $_POST['gvl_gdvt'][$i] . ' ' . $_POST['type'][$i] . ' ' . $_POST['manufacturer'][$i] . ' ' . $_POST['model'][$i] . ' ' . $_POST['serial'][$i] . ' ' . $_POST['supplier'][$i] . ' ' .  $dateSQL . ' ' . $_POST['note'][$i]  . ' ' .  $_POST['PO'][$i];
+			$sql->addHW($_POST['gvl_gdvt'][$i], $_POST['type'][$i], $_POST['manufacturer'][$i], $_POST['model'][$i], $_POST['serial'][$i], $_POST['supplier'][$i], $_POST['PO'][$i], $dateSQL, $_POST['note'][$i]);
+			
+			if($_POST['SSO'][$i] != null)
 			{
-			//	$sql->insertHWPO();
+				$sql->addOwnershipNew($_POST['SSO'][$i], $_POST['note'][$i]);
 			}
-			else
-			{
-				//$sql->insertHWPO();
-			}
+			
+			$hw = $sql->getHW();
+			
 		}
 	}
+	$assetManufacturers = $sql->getManufacturers();
+	$assetSuppliers = $sql->getSuppliers();
+	$hw = $sql->getHW();
 	
 }
 
@@ -102,7 +111,7 @@ $admin=$verify->isAdmin();
 	<form method="post">
 		<table class="new_HW_table">
 			<tr class="table_header">
-				<th>Inventary</th>
+				<th>inventory</th>
 				<th>Type</th>
 				<th>Manufacturer</th>
 				<th>Model</th>
@@ -116,39 +125,45 @@ $admin=$verify->isAdmin();
 				<th>Activated by</th>
 				<th>Note</th>
 			</tr>
-			<tr>
-				<td>GVL3356</td>
-				<td>Computer</td>
-				<td>Dell</td>
-				<td>Lattitude E7270</td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td>1.1.2017</td>
-				<td></td>
-				<td>MDy</td>
-				<td></td>
-			</tr>
-			<tr>
-				<td>GDVT1415</td>
-				<td>Mobile</td>
-				<td>Apple</td>
-				<td>iPhone SE 64GB</td>
-				<td></td>
-				<td>Johnson Brian</td>
-				<td>212666686</td>
-				<td>14152678</td>
-				<td>6.6.2016</td>
-				<td></td>
-				<td></td>
-				<td></td>
-				<td></td>
-			</tr>
-			
-				<?php for($i=1 ; $i <= $emptyCols; $i++) {?>
-		<tr>
+
+			<?php
+				$i=0;
+				foreach($hw as  $h)
+				{
+					echo "<tr>";
+					echo "<td id=\"invTd[" .$i .  "]\">". $h['inventory_number']."</td>";
+					echo "";
+					echo "<td id=\"assetTd[" .$i .  "]\">" . $h['asset_type']."</td>";
+					echo "";
+					echo "<td id=\"manufacturerTd[" .$i .  "]\">" . $h['manufacturer_name']."</td>";
+					echo "";
+					echo "<td id=\"modelTd[" .$i .  "]\">" . $h['model']."</td>";
+					echo "";
+					echo "<td id=\"serialTd[" .$i .  "]\">" . $h['serial']."</td>";
+					echo "";
+					echo "<td id=\"ownerTd[" .$i .  "]\">" . $h['owner_surname']. " ". $h['owner_name']."</td>";
+					echo "";
+					echo "<td id=\"ownerIDTd[" .$i .  "]\">" . $h['owner_id']."</td>";
+					echo "";
+					echo "<td id=\"supplierTd[" .$i .  "]\">" . $h['supplier_name']."</td>";
+					echo "";
+					echo "<td id=\"poTd[" .$i .  "]\">" . $h['po']."</td>";
+					echo "";
+					echo "<td id=\"dateTd[" .$i .  "]\">" . $h['date_supplied']."</td>";
+					echo "";
+					echo "<td id=\"signedTd[" .$i .  "]\">" . $h['signed']."</td>";
+					echo "";
+					echo "<td id=\"createdByTd[" .$i .  "]\">" . $h['created_by']."</td>";
+					echo "";
+					echo "<td id=\"noteTd[" .$i .  "]\">" . $h['note']."</td>";
+					echo "</tr>";
+					$i++;
+				}
+			?>
+
+			<?php 
+				for($i=0 ; $i < $emptyCols; $i++) {?>
+				<tr>
 				<td>
 					<select name="gvl_gdvt[<?php echo $i; ?>]">
 						<option>GDVT</option>
@@ -182,8 +197,8 @@ $admin=$verify->isAdmin();
 				<td>
 					<input name="serial[<?php echo $i; ?>]" placeholder="Serial No.">
 				</td>
-				<td></td>
-				<td><input name="SSO[<?php echo $i; ?>]" placeholder="SSO"></td>
+				<td><input name="user[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+				<td><input name="SSO[<?php echo $i; ?>]" placeholder="SSO" onblur="userOnblur(this)"></td>
 				<td>
 					<input type="text" list="suppliers" name="supplier[<?php echo $i; ?>]">
 					<datalist id="suppliers">
@@ -202,9 +217,9 @@ $admin=$verify->isAdmin();
 				<td>
 					<textarea name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea>
 				</td>
-		</tr>
+				</tr>
 		
-		<?php } ?>
+			<?php } ?>
 		
 		</table>
 		
@@ -213,10 +228,67 @@ $admin=$verify->isAdmin();
 	</main>
   
   
-   
-  	
-  
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	 <script>
+		function reqListener ()
+		{
+			console.log(this.responseText);
+		}
+		
+		function userOnblur(elem)
+		{
+			var no = elem.name.charAt(4);
+			var elemUser = document.getElementsByName("user[" + no + "]")[0];
+			findUser(elem.value, elemUser, elem);
+			
+			//elem.onblur = updateUser;
+		}
+				
+		function findUser(sso, elemUser, elem)
+		{	
+			for(var i=0; i<usersJson.length; i++)
+			{
+				if(usersJson[i].sso==sso)
+				{	
+					elemUser.value = usersJson[i].surname + " " + usersJson[i].name;
+					return;
+				}
+			}
+			elemUser.value = null;
+			elem.value=null;
+			
+		}
+		
+		function updateUser()
+		{
+			var user=userField.value;
+			findUser(user);
+		}
+		
+		var userField = document.getElementById("usr");
+		var userText = document.getElementById("txt");
+		var usersJson;
+		var oReq = new XMLHttpRequest(); //New request object
+		
+		oReq.onload = function()
+		{
+				//This is where you handle what to do with the response.
+				//The actual data is found on this.responseText
+			usersJson = JSON.parse(this.responseText);
+		};
+		
+		
+		oReq.open("get", "src/getUsersActive.php", true);
+		oReq.send();
+		
+			
+			
 
+	  
+	</script> 
+ 
+  
+  
 </body>
 
 </html>
