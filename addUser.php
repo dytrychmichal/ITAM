@@ -6,6 +6,8 @@ session_start();
 // You can store as much data as you like within in sessions. All sessions are stored on the server. The only limits you can reach is the maximum memory a script can consume at one time, which by default is 128MB.
 //http://stackoverflow.com/questions/217420/ideal-php-session-size
 
+date_default_timezone_set('Europe/Prague');
+
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
@@ -21,7 +23,8 @@ $verify->verify();
 $admin=$verify->isAdmin();    
 */
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	$sql->addUser($_POST['name'], $_POST['surname'], $_POST['sso']);
+	$dateSQL = date('Y-m-d', time());
+	$sql->addUser($_POST['name'], $_POST['surname'], $_POST['sso'], $_POST['costCenter'], $dateSQL);
 }
 
 ?>
@@ -47,13 +50,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	</header>
 	
 	<form method="POST">
-		<input type="text"  placeholder="Name" name="name" required></input>
-		<input type="text"  placeholder="Surname" name="surname" required></input>
-		<input type="text"  placeholder="SSO" name="sso" required></input>
-		<select>
+		<input type="text"  placeholder="Name" name="name" required autocomplete="off"></input>
+		<input type="text"  placeholder="Surname" name="surname" required autocomplete="off"></input>
+		<input type="text"  placeholder="SSO" name="sso" required autocomplete="off"></input>
+		<select name="costCenter">
 			<?php foreach($CCs as $CC)
 			{
-				echo '<option value="'.$CC['name'].'">'.$CC['name'].' - '.$CC['code'].'</option>';
+				echo '<option value="'.$CC['code'].'">'.$CC['name'].' - '.$CC['code'].'</option>';
 			}
 			?>
 		</select>
