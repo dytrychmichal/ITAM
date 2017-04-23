@@ -11,11 +11,14 @@ date_default_timezone_set('Europe/Prague');
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
+$verify=new verify();
+$verify->verify(); 
+$sql = new SQL();
 
 $sql = new SQL();
 $ownerships = $sql->getOwnerships();
 
-$emptyRows = 5;
+$emptyRows = 4;
 
 function findSQLArray($arr, $n, $i)		//returns true if $_POST[$n][$i] exists in PostgreSQL Array $arr
 {	
@@ -38,22 +41,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		{
 			if($_POST['ssoNew'][$i] != null && $_POST['ssoNew'][$i] != $_POST['ssoOld'][$i]) //check if SSO has been inserted and new SSO is not the same as old SSO
 			{
-				$dateSQL = date('Y-m-d', time());
-				
+				$dateSQL = date('Y-m-d', time());				
 				echo 'inserting '. $_POST['inv'][$i] . ' ' . $_POST['ssoOld'][$i] . ' ' .  $dateSQL  . ' ' .  $_POST['ssoNew'][$i] . '<br>';
-				$sql->createOwnership($_POST['inv'][$i], $_POST['ssoOld'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
+				if($_POST['ssoOld'][$i] == null)	//old SSO is null - transferring a new Hardware
+				{
+					$sql->createOwnershipNew($_POST['inv'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
+				}
+				else
+				{					
+					$sql->createOwnership($_POST['inv'][$i], $_POST['ssoOld'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
+				}
 			}
 		}
 		$ownerships = $sql->getOwnerships();
 	}
 }
-/*$verify=new verify();
-$sql = new SQL();
-*/
-/*
-$verify->verify();
-$admin=$verify->isAdmin();    
-*/
 
 ?>
 
@@ -80,7 +82,7 @@ $admin=$verify->isAdmin();
 
 <body>
 	<header>
-		<h1>ITInvent</h1>
+		<h1>Transfers</h1>
 		
 		<?php include 'src/navbar.php' ?>
 	</header>
@@ -99,7 +101,6 @@ $admin=$verify->isAdmin();
 				<th>SSO</th>
 				<th>Note</th>
 				<th>Date</th>
-				<th>Signed</th>
 				<th>Created by</th>
 			</tr>
 			</thead>
@@ -115,7 +116,6 @@ $admin=$verify->isAdmin();
 				<th>SSO</th>
 				<th>Note</th>
 				<th>Date</th>
-				<th>Signed</th>
 				<th>Created by</th>
 			</tr>
 			</tfoot>
@@ -123,35 +123,34 @@ $admin=$verify->isAdmin();
 			<?php
 			foreach($ownerships as $o)
 			{
-				echo '<tr>';
-				echo '<td>' . $o['id'] . '</td>';
-				echo '<td>' . $o['inventory_number'] . '</td>';
-				echo '<td>' . $o['m_name'] . ' ' .$o['model'] . '</td>';
-				echo '<td>' . $o['serial'] . '</td>';
-				echo '<td>' . $o['l_surname'] . ' ' .$o['l_name'] . '</td>';
-				echo '<td>' . $o['l_sso'] . '</td>';
-				echo '<td>' . $o['n_surname'] . $o['n_name'] . '</td>';
-				echo '<td>' . $o['n_sso'] . '</td>';
-				echo '<td>' . $o['note'] . '</td>';
-				echo '<td>' . $o['date_created'] . '</td>';
-				echo '<td>'  . '</td>';
-				echo '<td>' .substr($o['c_name'], 0, 1) . substr($o['c_surname'], 0, 2),  '</td>';
-				echo '</tr>';
+				echo "<tr>\n";				// \n for better HTML readability
+				echo "<td>" . $o['id'] . "</td>\n";
+				echo "<td>" . $o['inventory_number'] . "</td>\n";
+				echo "<td>" . $o['m_name'] . " " .$o['model'] . "</td>\n";
+				echo "<td>" . $o['serial'] . "</td>\n";
+				echo "<td>" . $o['l_surname'] . " " .$o['l_name'] . "</td>\n";
+				echo "<td>" . $o['l_sso'] . "</td>\n";
+				echo "<td>" . $o['n_surname'] . " " . $o['n_name'] . "</td>\n";
+				echo "<td>" . $o['n_sso'] . "</td>\n";
+				echo "<td>" . $o['note'] . "</td>\n";
+				echo "<td>" . DateTime::createFromFormat('Y-m-d', $o['date_created'])->format('d.m.Y') . "</td>\n";
+				echo "<td>" .substr($o['c_name'], 0, 1) . substr($o['c_surname'], 0, 2),  "</td>\n";
+				echo "</tr>\n";
 			}
 			?>
 			<?php
 				for($i=0 ; $i<$emptyRows; $i++) 
 				{ ?>
-					<tr>
-					<td>id</td>
-					<td><input name="inv[<?php echo $i; ?>]" placeholder="INV" onblur="invOnblur(this)" autocomplete="off"></td>
-					<td><input name="hwName[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
-					<td><input name="serial[<?php echo $i; ?>]" placeholder="Serial" onblur="serialOnblur(this)" autocomplete="off"></td>
-					<td><input name="userOld[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
-					<td><input name="ssoOld[<?php echo $i; ?>]" disabled="disabled" readonly></td>					
-					<td><input name="userNew[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
-					<td><input name="ssoNew[<?php echo $i; ?>]" placeholder="SSO" disabled="disabled" onblur="userOnblur(this)" autocomplete="off"></td>
-					<td><textarea name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea></td>
+					<tr class="inv">
+					<td class="inv">id</td>
+					<td class="inv"><input type="text" class="inv" name="inv[<?php echo $i; ?>]" placeholder="INV" onblur="invOnblur(this)" autocomplete="off"></td>
+					<td class="inv"><input type="text" class="inv" name="hwName[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="serial[<?php echo $i; ?>]" placeholder="Serial" onblur="serialOnblur(this)" autocomplete="off"></td>
+					<td class="inv"><input type="text" class="inv" name="userOld[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="ssoOld[<?php echo $i; ?>]" disabled="disabled" readonly></td>					
+					<td class="inv"><input type="text" class="inv" name="userNew[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="ssoNew[<?php echo $i; ?>]" placeholder="SSO" disabled="disabled" onblur="userOnblur(this)" autocomplete="off"></td>
+					<td class="inv" colspan="3"><textarea type="text" class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea></td>
 					</tr>
 			<?php } ?>
 			</tbody>
@@ -160,6 +159,7 @@ $admin=$verify->isAdmin();
 	<input type="submit" value="Save" name="Save" onclick="unAble()">
 	</form>
 	</main>
+	<?php include 'src/footer.php' ?>
 
 </body>
 

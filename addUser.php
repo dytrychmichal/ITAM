@@ -11,17 +11,14 @@ date_default_timezone_set('Europe/Prague');
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
+
+$verify=new verify();
+$verify->verify();
+
 $sql = new SQL();
 $CCs = $sql->getCostcenters();
 
 
-/*$verify=new verify();
-$sql = new SQL();
-*/
-/*
-$verify->verify();
-$admin=$verify->isAdmin();    
-*/
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$dateSQL = date('Y-m-d', time());
 	$sql->addUser($_POST['name'], $_POST['surname'], $_POST['sso'], $_POST['costCenter'], $dateSQL);
@@ -44,24 +41,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
 	<header>
-		<h1>ITInvent</h1>
+		<h1>Add User</h1>
 		
 		<?php include 'src/navbar.php' ?>
 	</header>
-	
-	<form method="POST">
-		<input type="text"  placeholder="Name" name="name" required autocomplete="off"></input>
-		<input type="text"  placeholder="Surname" name="surname" required autocomplete="off"></input>
-		<input type="text"  placeholder="SSO" name="sso" required autocomplete="off"></input>
-		<select name="costCenter">
-			<?php foreach($CCs as $CC)
-			{
-				echo '<option value="'.$CC['code'].'">'.$CC['name'].' - '.$CC['code'].'</option>';
-			}
-			?>
-		</select>
-		<input type="submit" value="Submit"> 
-	</form>
+	<main>
+		<form method="POST">
+			<input type="text"  placeholder="Name" name="name" required autocomplete="off"></input>
+			<input type="text"  placeholder="Surname" name="surname" required autocomplete="off"></input>
+			<input type="text"  placeholder="SSO" name="sso" required autocomplete="off"></input>
+			<select name="costCenter">
+				<?php foreach($CCs as $CC)
+				{
+					echo '<option value="'.$CC['code'].'">'.$CC['name'].' - '.$CC['code'].'</option>';
+				}
+				?>
+			</select>
+			<input type="submit" value="Submit"> 
+		</form>
+	</main>
+	<?php include 'src/footer.php' ?>
   
   
    

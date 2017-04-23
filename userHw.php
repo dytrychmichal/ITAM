@@ -11,6 +11,8 @@ date_default_timezone_set('Europe/Prague');
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
+$verify=new verify();
+$verify->verify();
 
 $sql = new SQL();
 $userHw = null;
@@ -77,7 +79,7 @@ $admin=$verify->isAdmin();
 
 <body>
 	<header>
-		<h1>ITInvent</h1>
+		<h1>User HW</h1>
 		
 		<?php include 'src/navbar.php' ?>
 	</header>
@@ -142,7 +144,7 @@ $admin=$verify->isAdmin();
 			<input type="submit" name="Save" value="Save" onclick="unAble()">
 		</form>
 	</main>
-
+	<?php include 'src/footer.php' ?>
 </body>
 
 </html>

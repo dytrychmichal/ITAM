@@ -11,6 +11,9 @@ date_default_timezone_set('Europe/Prague');
 require_once('classes/verify.php');
 require_once('classes/sql.php');
 
+$verify=new verify();
+$verify->verify();
+
 $sql = new SQL();
 $assetTypes = $sql->getTypes();
 $assetManufacturers = $sql->getManufacturers();
@@ -18,7 +21,6 @@ $assetSuppliers = $sql->getSuppliers();
 $hw = $sql->getHW();
 
 $emptyRows = 5;		//determines how many empty columns there will be on the bottom of the table
-
 
 function findSQLArray($arr, $n, $i)		//returns true if $_POST[$n][$i] exists in PostgreSQL Array $arr
 {	
@@ -43,20 +45,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			
 			if(!findSQLArray($assetManufacturers, 'manufacturer', $i)) 	//If manufacturer does not exist, add new to DB
 			{
-				echo $_POST['manufacturer'][$i] . ' not in list, adding to DB'; 
+				echo $_POST['manufacturer'][$i] . ' not in list, adding to DB<br>'; 
 				$sql->addManufacturer($_POST['manufacturer'][$i]);			//add new manufacturer to DB
 				$assetManufacturers = $sql->getManufacturers();				//and refresh list of manufacturers
 			}
 			
 			if(!findSQLArray($assetSuppliers, 'supplier', $i))				//If supplier does not exist, add new to DB
 			{
-				echo $_POST['supplier'][$i] . ' not in list, adding to DB'; 
+				echo $_POST['supplier'][$i] . ' not in list, adding to DB<br>'; 
 				$sql->addSupplier($_POST['supplier'][$i]);					//add new supplier to DB
 				$assetSuppliers = $sql->getSuppliers();						//and refresh list of suppliers
 			}
 			
-			$date = DateTime::createFromFormat('m.d.Y', $_POST['date_supplied'][$i]);
-			$dateSQL = $date->format('Y-m-d');
+			if($date = DateTime::createFromFormat('m.d.Y', $_POST['date_supplied'][$i]))
+			{
+				$dateSQL = $date->format('Y-m-d');
+			}
+			else if($date = DateTime::createFromFormat('Y-m-d', $_POST['date_supplied'][$i]))
+			{
+				$dateSQL = $date->format('Y-m-d');
+			}
+			else
+			{				
+				echo "bad dateformat, using today's date";
+				$dateSQL = date('Y-m-d', time());
+			}
 			
 			
 			//echo 'inserting '. $_POST['gvl_gdvt'][$i] . ' |' . $_POST['type'][$i] . '| |' . $_POST['manufacturer'][$i] . '| |' . $_POST['model'][$i] . '| |' . $_POST['serial'][$i] . '| |' . $_POST['supplier'][$i] . '| |' .  $dateSQL . '| |' . $_POST['note'][$i]  . '| |' .  $_POST['PO'][$i] . "|";
@@ -65,11 +78,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				$_POST['PO'][$i] = null;
 			}
 			$sql->addHW($_POST['gvl_gdvt'][$i], $_POST['type'][$i], $_POST['manufacturer'][$i], $_POST['model'][$i], $_POST['serial'][$i], $_POST['supplier'][$i], $_POST['PO'][$i], $dateSQL, $_POST['note'][$i]);
-			
-			if($_POST['SSO'][$i] != null)
-			{
-				$sql->addOwnershipNew($_POST['SSO'][$i], $_POST['note'][$i]);
-			}
+
 			
 			$hw = $sql->getHW();
 			
@@ -78,16 +87,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	$assetManufacturers = $sql->getManufacturers();
 	$assetSuppliers = $sql->getSuppliers();
 	$hw = $sql->getHW();
+	unset($_POST);
 	
 }
-
-/*$verify=new verify();
-$sql = new SQL();
-*/
-/*
-$verify->verify();
-$admin=$verify->isAdmin();    
-*/
 
 ?>
 
@@ -104,6 +106,7 @@ $admin=$verify->isAdmin();
 	
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 	<script src="/src/addHWScripts.js" type="text/javascript"></script>
+	
 	<script>
 	// after dom is loaded go to the end of the page
 	$(function() {
@@ -116,7 +119,7 @@ $admin=$verify->isAdmin();
 
 <body>
 	<header>
-		<h1>ITInvent</h1>
+		<h1>Hardware</h1>
 		
 		<?php include 'src/navbar.php' ?>
 	
@@ -131,14 +134,14 @@ $admin=$verify->isAdmin();
 				<th>Manufacturer</th>
 				<th>Model</th>
 				<th>Serial</th>
-				<th>Owner Name</th>
-				<th>Owner SSO</th>
 				<th>Supplier</th>
 				<th>PO</th>
 				<th>Date delivered</th>
-				<th>AP signed</th>
-				<th>Activated by</th>
 				<th>Note</th>
+				<th>
+					<button type="button" value="editAll" name="buttonEditAll" onclick="editAll()">edit all</button>
+					<button type="button" value="deleteAll" name="buttonDeleteAll" onclick="scrapAll()">scrap all</button>
+				</th>
 			</tr>
 			</thead>
 
@@ -149,14 +152,14 @@ $admin=$verify->isAdmin();
 				<th>Manufacturer</th>
 				<th>Model</th>
 				<th>Serial</th>
-				<th>Owner Name</th>
-				<th>Owner SSO</th>
 				<th>Supplier</th>
 				<th>PO</th>
 				<th>Date delivered</th>
-				<th>AP signed</th>
-				<th>Activated by</th>
 				<th>Note</th>
+				<th>
+					<button type="button" value="editAll" name="buttonEditAll" onclick="editAll()">edit all</button>
+					<button type="button" value="deleteAll" name="buttonDeleteAll" onclick="scrapAll()">scrap all</button>
+				</th>
 			</tr>
 			</tfoot>
 
@@ -165,46 +168,33 @@ $admin=$verify->isAdmin();
 				$i=0;
 				foreach($hw as  $h)
 				{
-					echo "<tr>";
-					echo "<td id=\"invTd[" .$i .  "]\">". $h['inventory_number']."</td>";
-					echo "";
-					echo "<td id=\"assetTd[" .$i .  "]\">" . $h['asset_type']."</td>";
-					echo "";
-					echo "<td id=\"manufacturerTd[" .$i .  "]\">" . $h['manufacturer_name']."</td>";
-					echo "";
-					echo "<td id=\"modelTd[" .$i .  "]\">" . $h['model']."</td>";
-					echo "";
-					echo "<td id=\"serialTd[" .$i .  "]\">" . $h['serial']."</td>";
-					echo "";
-					echo "<td id=\"ownerTd[" .$i .  "]\">" . $h['owner_surname']. " ". $h['owner_name']."</td>";
-					echo "";
-					echo "<td id=\"ownerIDTd[" .$i .  "]\">" . $h['owner_id']."</td>";
-					echo "";
-					echo "<td id=\"supplierTd[" .$i .  "]\">" . $h['supplier_name']."</td>";
-					echo "";
-					echo "<td id=\"poTd[" .$i .  "]\">" . $h['po']."</td>";
-					echo "";
-					echo "<td id=\"dateTd[" .$i .  "]\">" . $h['date_supplied']."</td>";
-					echo "";
-					echo "<td id=\"signedTd[" .$i .  "]\">" . $h['signed']."</td>";
-					echo "";
-					echo "<td id=\"createdByTd[" .$i .  "]\">" . $h['created_by']."</td>";
-					echo "";
-					echo "<td id=\"noteTd[" .$i .  "]\">" . $h['note']."</td>";
-					echo "</tr>";
+					echo "<tr id=\"invTr[" . $i . "]\">\n";			// added \n for better HTML readability
+					echo "<td id=\"invTd[" .$i .  "]\">". $h['inventory_number']."</td>\n";					
+					echo "<td id=\"assetTd[" .$i .  "]\">" . $h['asset_type']."</td>\n";					
+					echo "<td id=\"manufacturerTd[" .$i .  "]\">" . $h['manufacturer_name']."</td>\n";					
+					echo "<td id=\"modelTd[" .$i .  "]\">" . $h['model']."</td>\n";					
+					echo "<td id=\"serialTd[" .$i .  "]\">" . $h['serial']."</td>\n";			
+					echo "<td id=\"supplierTd[" .$i .  "]\">" . $h['supplier_name']."</td>\n";					
+					echo "<td id=\"poTd[" .$i .  "]\">" . $h['po']."</td>\n";					
+					echo "<td id=\"dateTd[" .$i .  "]\">" . DateTime::createFromFormat('Y-m-d', $h['date_supplied'])->format('d.m.Y') ."</td>\n";				
+					echo "<td id=\"noteTd[" .$i .  "]\">" . $h['note']."</td>\n";
+					echo "<td id=\"buttonTd[" .$i .  "]\">" . 
+					"<button type=\"button\" value=\"edit\" name=\"buttonEdit\" onclick=\"editAdd(" . $i . ");\">edit</button>" . 
+					"<button type=\"button\" value=\"scrap\" name=\"buttonScrap\" onclick=\"scrapAdd(" . $i . ");\">scrap</button>".  "</td>\n";
+					echo "</tr>\n";
 					$i++;
 				}
 			?>
 
-			<tr>
-				<td>
-					<select name="gvl_gdvt[0]" autofocus>
+			<tr class="inv" id="firstEditable">
+				<td class="inv">
+					<select class="inv" name="gvl_gdvt[0]" autofocus>
 						<option>GDVT</option>
 						<option>GVL</option>
 					</select>
 				</td>
-				<td>
-					<select name="type[0]">
+				<td id="firstSelect" class="inv">
+					<select  class="inv" name="type[0]">
 						<?php
 							foreach($assetTypes as  $t)
 							{
@@ -213,9 +203,9 @@ $admin=$verify->isAdmin();
 						?>
 					</select>
 				</td>
-				<td>
-					<input list="manufacturer" name="manufacturer[0]" autocomplete="off">
-					<datalist id="manufacturer">
+				<td class="inv">
+					<input class="inv" list="manufacturer" name="manufacturer[0]" autocomplete="off">
+					<datalist  class="inv" id="manufacturer">
 						<?php
 							foreach($assetManufacturers as  $m)
 							{
@@ -224,17 +214,15 @@ $admin=$verify->isAdmin();
 						?>
 					</datalist>
 				</td>
-				<td>
-					<input name="model[0]" placeholder="Model" onkeypress="return event.keyCode != 13;">
+				<td class="inv">
+					<input type="text" class="inv" name="model[0]" placeholder="Model" onkeypress="return event.keyCode != 13;">
 				</td>
-				<td>
-					<input name="serial[0]" placeholder="Serial No." autocomplete="off" onkeypress="return event.keyCode != 13;">
+				<td class="inv">
+					<input type="text" class="inv" name="serial[0]" placeholder="Serial No." autocomplete="off" onkeypress="return event.keyCode != 13;">
 				</td>
-				<td><input name="user[0]" type="text" disabled="disabled" readonly></td>
-				<td><input name="SSO[0]" placeholder="SSO" onblur="userOnblur(this)" autocomplete="off" onkeypress="return event.keyCode != 13;"></td>
-				<td>
-					<input type="text" list="suppliers" name="supplier[0]" autocomplete="off">
-					<datalist id="suppliers">
+				<td class="inv">
+					<input type="text" class="inv" list="suppliers" name="supplier[0]" autocomplete="off">
+					<datalist class="inv" id="suppliers">
 						<?php
 							foreach($assetSuppliers as  $m)
 							{
@@ -243,26 +231,24 @@ $admin=$verify->isAdmin();
 						?>
 					</datalist>
 				</td>
-				<td><input name="PO[0]" placeholder="PO" autocomplete="off" onkeypress="return event.keyCode != 13;"></td>
-				<td><input type="date" name="date_supplied[0]" autocomplete="off" placeholder="mm.dd.yyy"></td>
-				<td></td>
-				<td></td>
-				<td>
-					<textarea name="note[0]" rows="1" cols="10"></textarea>
+				<td class="inv"><input type="text" name="PO[0]" class="inv" placeholder="PO" autocomplete="off" onkeypress="return event.keyCode != 13;"></td>
+				<td class="inv"><input type="date" class="inv" name="date_supplied[0]" autocomplete="off" placeholder="mm.dd.yyy"></td>
+				<td class="inv" rowspan="1" colspan="2">
+					<textarea class="inv" name="note[0]" rows="1" cols="10"></textarea>
 				</td>
 			</tr>
 
 			<?php 
 				for($i=1 ; $i < $emptyRows; $i++) {?>
-				<tr>
-				<td>
-					<select name="gvl_gdvt[<?php echo $i; ?>]">
+				<tr class="inv">
+				<td class="inv">
+					<select  class="inv" name="gvl_gdvt[<?php echo $i; ?>]">
 						<option>GDVT</option>
 						<option>GVL</option>
 					</select>
 				</td>
-				<td>
-					<select name="type[<?php echo $i; ?>]">
+				<td class="inv">
+					<select class="inv" name="type[<?php echo $i; ?>]">
 						<?php
 							foreach($assetTypes as  $t)
 							{
@@ -271,8 +257,8 @@ $admin=$verify->isAdmin();
 						?>
 					</select>
 				</td>
-				<td>
-					<input list="manufacturer" name="manufacturer[<?php echo $i; ?>] autocomplete="off"">
+				<td class="inv">
+					<input  class="inv" list="manufacturer" name="manufacturer[<?php echo $i; ?>]" autocomplete="off">
 					<datalist id="manufacturer">
 						<?php
 							foreach($assetManufacturers as  $m)
@@ -282,17 +268,15 @@ $admin=$verify->isAdmin();
 						?>
 					</datalist>
 				</td>
-				<td>
-					<input name="model[<?php echo $i; ?>]" placeholder="Model">
+				<td class="inv">
+					<input class="inv" name="model[<?php echo $i; ?>]" placeholder="Model">
 				</td>
-				<td>
-					<input name="serial[<?php echo $i; ?>]" placeholder="Serial No." autocomplete="off">
+				<td class="inv">
+					<input class="inv" name="serial[<?php echo $i; ?>]" placeholder="Serial No." autocomplete="off">
 				</td>
-				<td><input name="user[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
-				<td><input name="SSO[<?php echo $i; ?>]" placeholder="SSO" onblur="userOnblur(this)" autocomplete="off"></td>
-				<td>
-					<input type="text" list="suppliers" name="supplier[<?php echo $i; ?>]" autocomplete="off">
-					<datalist id="suppliers">
+				<td class="inv">
+					<input class="inv" type="text" list="suppliers" name="supplier[<?php echo $i; ?>]" autocomplete="off">
+					<datalist class="inv" id="suppliers">
 						<?php
 							foreach($assetSuppliers as  $m)
 							{
@@ -301,12 +285,10 @@ $admin=$verify->isAdmin();
 						?>
 					</datalist>
 				</td>
-				<td><input name="PO[<?php echo $i; ?>]" placeholder="PO" autocomplete="off"></td>
-				<td><input type="date" name="date_supplied[<?php echo $i; ?>]" placeholder="mm.dd.yyy" autocomplete="off"></td>
-				<td></td>
-				<td></td>
-				<td>
-					<textarea name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea>
+				<td class="inv"><input class="inv" name="PO[<?php echo $i; ?>]" placeholder="PO" autocomplete="off"></td>
+				<td class="inv"><input type="date" class="inv" name="date_supplied[<?php echo $i; ?>]" placeholder="mm.dd.yyy" autocomplete="off"></td>
+				<td class="inv" rowspan="1" colspan="2">
+					<textarea class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea>
 				</td>
 				</tr>
 		
@@ -317,7 +299,7 @@ $admin=$verify->isAdmin();
 		<input type="submit" value="Add HW">
 		</form>
 	</main>
-  
+	<?php include 'src/footer.php' ?>
   
 </body>
 

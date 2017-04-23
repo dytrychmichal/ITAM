@@ -44,9 +44,11 @@ function invOnblur(elem)
 	var elemSerial = document.getElementsByName("serial[" + no + "]")[0];
 	var elemUser = document.getElementsByName("userOld[" + no + "]")[0];
 	var elemSso = document.getElementsByName("ssoOld[" + no + "]")[0];
+	var elemUserNew = document.getElementsByName("userNew[" + no + "]")[0];
 	var elemSsoNew = document.getElementsByName("ssoNew[" + no + "]")[0];
+	var elemNote = document.getElementsByName("note[" + no + "]")[0];
 	var hwJson;
-	var inv = elem.value;	
+	var inv = elem.value.toUpperCase();	
 	//proper POST format
 	if(inv != null && inv != '') 				//only if inv is not empty
 	{
@@ -60,24 +62,31 @@ function invOnblur(elem)
 			hwJson = JSON.parse(this.responseText);
 			if(!isEmptyObject(hwJson))
 			{	
+				elem.value = elem.value.toUpperCase();
 				elemSerial.setAttribute("disabled", "disabled");
 				elemUser.setAttribute("disabled", "disabled");
 				elemSso.setAttribute("disabled", "disabled");
 				elemHw.value = hwJson[0].manufacturer_name + " " + hwJson[0].model;
 				elemSerial.value = hwJson[0].serial;
-				elemUser.value = hwJson[0].user_surname + " " + hwJson[0].user_name;
-				elemSso.value = hwJson[0].sso;
+				if(hwJson[0].sso != null)
+				{
+					elemUser.value = hwJson[0].user_surname + " " + hwJson[0].user_name;
+					elemSso.value = hwJson[0].sso;
+				}
 				elemSsoNew.removeAttribute("disabled");
 			}
 			else	//set line to default
 			{
+				elem.value = null;
 				elemHw.value = null;
 				elemSerial.value = null;
 				elemSerial.removeAttribute("disabled");
 				elemUser.value = null;
 				elemSso.value = null;
+				elemUserNew.value = null;
+				elemSsoNew.value = null;		
 				elemSsoNew.setAttribute("disabled", "disabled");
-				elem.value = null;
+				elemNote.value = null;
 			}
 			
 		}
@@ -90,12 +99,16 @@ function invOnblur(elem)
 	
 	else //empty value - set to default
 	{
+		elem.value = null;
 		elemHw.value = null;
 		elemSerial.value = null;
 		elemSerial.removeAttribute("disabled");
 		elemUser.value = null;
-		elemSso.value = null;		
+		elemSso.value = null;
+		elemUserNew.value = null;
+		elemSsoNew.value = null;		
 		elemSsoNew.setAttribute("disabled", "disabled");
+		elemNote.value = null;
 		
 	}
 	
@@ -109,9 +122,11 @@ function serialOnblur(elem)
 	var elemInv = document.getElementsByName("inv[" + no + "]")[0];
 	var elemUser = document.getElementsByName("userOld[" + no + "]")[0];
 	var elemSso = document.getElementsByName("ssoOld[" + no + "]")[0];
+	var elemUserNew = document.getElementsByName("userNew[" + no + "]")[0];
 	var elemSsoNew = document.getElementsByName("ssoNew[" + no + "]")[0];
+	var elemNote = document.getElementsByName("note[" + no + "]")[0];
 	var hwJson;
-	var ser = elem.value;	
+	var ser = elem.value.toUpperCase();	
 	
 	//proper POST format
 	if(ser != null && ser != '') 				//only if inv is not empty
@@ -126,13 +141,17 @@ function serialOnblur(elem)
 			hwJson = JSON.parse(this.responseText);
 			if(!isEmptyObject(hwJson))
 			{	
+				elem.value = elem.value.toUpperCase();
 				elemInv.setAttribute("disabled", "disabled");
 				elemUser.setAttribute("disabled", "disabled");
 				elemSso.setAttribute("disabled", "disabled");
 				elemHw.value = hwJson[0].manufacturer_name + " " + hwJson[0].model;
 				elemInv.value = hwJson[0].inv;
-				elemUser.value = hwJson[0].user_surname + " " + hwJson[0].user_name;
-				elemSso.value = hwJson[0].sso;
+				if(hwJson[0].sso != null)
+				{
+					elemUser.value = hwJson[0].user_surname + " " + hwJson[0].user_name;
+					elemSso.value = hwJson[0].sso;	
+				}
 				elemSsoNew.removeAttribute("disabled");
 			}
 			else	//set line to default
@@ -141,9 +160,12 @@ function serialOnblur(elem)
 				elemInv.value = null;
 				elemInv.removeAttribute("disabled");
 				elemUser.value = null;
-				elemSso.value = null;		
+				elemSso.value = null;	
+				elemSsoNew.value=null;	
 				elemSsoNew.setAttribute("disabled", "disabled");
+				elemUserNew.value=null;
 				elem.value = null;
+				elemNote.value=null;
 			}
 			
 		}
@@ -161,8 +183,11 @@ function serialOnblur(elem)
 		elemInv.removeAttribute("disabled");
 		elemUser.value = null;
 		elemSso.value = null;
+		elemSsoNew.value=null;
 		elemSsoNew.setAttribute("disabled", "disabled");
+		elemUserNew.value=null;
 		elem.value = null;
+		elemNote.value=null;
 		
 	}
 	
