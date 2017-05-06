@@ -4,5 +4,5 @@ if(!isset($_SESSION))
     session_start(); 
 } 
 session_destroy();
-header('Location: ../login.php');
+header('Location: http://sorry.vse.cz/~dytm01/login.php');
 ?>

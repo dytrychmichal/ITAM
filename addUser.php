@@ -43,13 +43,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<header>
 		<h1>Add User</h1>
 		
-		<?php include 'src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 	</header>
 	<main>
 		<form method="POST">
-			<input type="text"  placeholder="Name" name="name" required autocomplete="off"></input>
-			<input type="text"  placeholder="Surname" name="surname" required autocomplete="off"></input>
-			<input type="text"  placeholder="SSO" name="sso" required autocomplete="off"></input>
+			<input type="text"  placeholder="Name" name="name" required autocomplete="off">
+			<input type="text"  placeholder="Surname" name="surname" required autocomplete="off">
+			<input type="text"  placeholder="SSO" name="sso" required autocomplete="off" pattern="[0-9]{9}">
 			<select name="costCenter">
 				<?php foreach($CCs as $CC)
 				{
@@ -60,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			<input type="submit" value="Submit"> 
 		</form>
 	</main>
-	<?php include 'src/footer.php' ?>
+	<?php include './src/footer.php' ?>
   
   
    

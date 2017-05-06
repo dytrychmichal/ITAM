@@ -10,10 +10,12 @@ date_default_timezone_set('Europe/Prague');
 
 require_once('classes/verify.php');
 require_once('classes/sql.php');
+require_once('classes/pdf.php');
 
 $verify=new verify();
 $verify->verify(); 
 $sql = new SQL();
+$pdf = new transferPdf();
 
 $sql = new SQL();
 $ownerships = $sql->getOwnerships();
@@ -37,21 +39,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 	if(isset($_POST['Save']))
 	{
-		for($i = 0 ; $i < $emptyRows ; $i++)
+		$hw = array();
+		$ind = 0;
+		for($i = 0; $i < $emptyRows ; $i++)
 		{
 			if($_POST['ssoNew'][$i] != null && $_POST['ssoNew'][$i] != $_POST['ssoOld'][$i]) //check if SSO has been inserted and new SSO is not the same as old SSO
 			{
-				$dateSQL = date('Y-m-d', time());				
+				$hw[$ind]['userOld'] = $_POST['userOld'][$i];
+				$hw[$ind]['userNew'] = $_POST['userNew'][$i];
+				$hw[$ind]['ssoOld'] = $_POST['ssoOld'][$i];				
+				$hw[$ind]['ssoNew'] = $_POST['ssoNew'][$i];
+				$hw[$ind]['inv'] = $_POST['inv'][$i];
+				$hw[$ind]['hwName'] = $_POST['hwName'][$i];
+				$ind++;
+				$dateSQL = date('Y-m-d', time());
 				echo 'inserting '. $_POST['inv'][$i] . ' ' . $_POST['ssoOld'][$i] . ' ' .  $dateSQL  . ' ' .  $_POST['ssoNew'][$i] . '<br>';
 				if($_POST['ssoOld'][$i] == null)	//old SSO is null - transferring a new Hardware
 				{
-					$sql->createOwnershipNew($_POST['inv'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
+					$hw[$i]['no'] = $sql->createOwnershipNew($_POST['inv'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
 				}
 				else
 				{					
-					$sql->createOwnership($_POST['inv'][$i], $_POST['ssoOld'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
+					$hw[$i]['no'] = $sql->createOwnership($_POST['inv'][$i], $_POST['ssoOld'][$i], $_POST['ssoNew'][$i], $dateSQL, $_POST['note'][$i]);
 				}
+				
 			}
+		}
+		if($ind > 0)
+		{
+			$pdf->getTransferPdf($hw);
 		}
 		$ownerships = $sql->getOwnerships();
 	}
@@ -70,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	
 	<link rel="stylesheet" type="text/css" href="./styles.css">
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-	<script src="/src/transfersScripts.js" type="text/javascript"></script>	<script>
+	<script src="./src/transfersScripts.js" type="text/javascript"></script>	<script>
 	// after dom is loaded go to the end of the page
 	$(function() {
 	  // scroll all the way down
@@ -84,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<header>
 		<h1>Transfers</h1>
 		
-		<?php include 'src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 	</header>
 	<main>
 	<form method="post" name="hwTableForm" onkeypress="return event.keyCode != 13;">
@@ -144,13 +160,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					<tr class="inv">
 					<td class="inv">id</td>
 					<td class="inv"><input type="text" class="inv" name="inv[<?php echo $i; ?>]" placeholder="INV" onblur="invOnblur(this)" autocomplete="off"></td>
-					<td class="inv"><input type="text" class="inv" name="hwName[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="hwName[<?php echo $i; ?>]" disabled="disabled" readonly></td>
 					<td class="inv"><input type="text" class="inv" name="serial[<?php echo $i; ?>]" placeholder="Serial" onblur="serialOnblur(this)" autocomplete="off"></td>
-					<td class="inv"><input type="text" class="inv" name="userOld[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="userOld[<?php echo $i; ?>]" disabled="disabled" readonly></td>
 					<td class="inv"><input type="text" class="inv" name="ssoOld[<?php echo $i; ?>]" disabled="disabled" readonly></td>					
-					<td class="inv"><input type="text" class="inv" name="userNew[<?php echo $i; ?>]" type="text" disabled="disabled" readonly></td>
+					<td class="inv"><input type="text" class="inv" name="userNew[<?php echo $i; ?>]" disabled="disabled" readonly></td>
 					<td class="inv"><input type="text" class="inv" name="ssoNew[<?php echo $i; ?>]" placeholder="SSO" disabled="disabled" onblur="userOnblur(this)" autocomplete="off"></td>
-					<td class="inv" colspan="3"><textarea type="text" class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea></td>
+					<td class="inv" colspan="3"><textarea class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea></td>
 					</tr>
 			<?php } ?>
 			</tbody>
@@ -159,7 +175,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<input type="submit" value="Save" name="Save" onclick="unAble()">
 	</form>
 	</main>
-	<?php include 'src/footer.php' ?>
+	<?php include './src/footer.php' ?>
 
 </body>
 

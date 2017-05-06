@@ -2,6 +2,7 @@
 session_start();
 require_once('classes/sql.php');
 require_once('classes/verify.php');
+require_once('classes/passwordLib.php');
 
 
 $verify=new verify();
@@ -55,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
 <body>
 	<main>
-		<?php include '/src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 		
 		  <div>	
 			<h1>About me</h1>
@@ -72,9 +73,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
 			<div class="newPass">
 				<div class="left">
-				   Old password:<br>
-				   New password:<br>
-				   Confirm password:
+					<p>Old password:</p>
+					<p>New password:</p>
+					<p>Confirm password:</p>
 				</div>
 				<div class="right">
 					<input type="password" class="mepwd" name="oldPassword"><br>
@@ -94,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 		
 		</div>
 	</main>
-	<?php include 'src/footer.php' ?>
+	<?php include './src/footer.php' ?>
 </body>
 
 </html>        

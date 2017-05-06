@@ -4,26 +4,23 @@ require_once('classes/sql.php');
 
 $sql=new SQL();
 
-//$name = @$_COOKIE['name'];
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	# pokud nenastavime platnost, tak je cookie platna jen pro tuto session
-	#setcookie("name", $_POST['name']);
  
   $name = $_POST['name']; 
   $pass = $_POST['password'];
   
-	
-	  
     if ($usr=$sql->logIn($name, $pass))
     {
+		
       session_start();
+
       $_SESSION['name'] = $name;
       setcookie("name", $_POST['name'], time()+3600); # ted + 3600 sekund = 1 hodina
       header('Location: index.php');
     }
     else {
     $error = ' <span style="color: red"> Incorrect username or password! </span>';
+	
     }
   
   

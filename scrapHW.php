@@ -74,9 +74,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
 <body>
 	<header>
-		<h1>Edit HW</h1>
+		<h1>Scrap HW</h1>
 		
-		<?php include 'src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 	</header>
 	
 	<main>
@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 				<th>Supplier</th>
 				<th>PO</th>
 				<th>Date delivered</th>
-				<th rowspan="1" colspan="2">Reason scrapped*</th>
+				<th>Reason scrapped*</th>
 			</tr>
 			</thead>
 
@@ -151,13 +151,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 						<?php
 							echo $h["po"];
 						?>
+					</td>
 					<td class="inv">
 						<?php
 							$date = DateTime::createFromFormat('Y-m-d', $h["date_supplied"]);
 							echo $date->format('d.m.Y');
 						?>
 					</td>
-					<td class="inv" rowspan="1" colspan="2">
+					<td class="inv">
 						<textarea class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea>
 					</td>
 					</tr>
@@ -173,7 +174,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 		<input type="submit" value="Save" name="Save">
 		</form>
 	</main>
-	<?php include 'src/footer.php' ?>
+	<?php include './src/footer.php' ?>
 
 </body>
 

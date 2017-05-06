@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 	<header>
 		<h1>Edit HW</h1>
 		
-		<?php include 'src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 	</header>
 	
 	<main>
@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 				<th>Supplier</th>
 				<th>PO</th>
 				<th>Date delivered</th>
-				<th rowspan="1" colspan="2">Note</th>
+				<th>Note</th>
 			</tr>
 			</thead>
 
@@ -162,8 +162,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 						</select>
 					</td>
 					<td class="inv">
-						<input  class="inv" list="manufacturer" name="manufacturer[<?php echo $i; ?>]" value="<?php echo $h["manufacturer_name"]?>" autocomplete="off">
-						<datalist id="manufacturer">
+						<input  class="inv" list="manufacturerDatalist[<?php echo $i; ?>]" name="manufacturer[<?php echo $i; ?>]" value="<?php echo $h["manufacturer_name"]?>" autocomplete="off">
+						<datalist id="manufacturerDatalist[<?php echo $i; ?>]">
 							<?php
 								foreach($assetManufacturers as  $m)
 								{
@@ -179,8 +179,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 						<input class="inv" name="serial[<?php echo $i; ?>]" placeholder="Serial No." value="<?php echo $h["serial"]?>" autocomplete="off">
 					</td>
 					<td class="inv">
-						<input class="inv" type="text" list="suppliers" name="supplier[<?php echo $i; ?>]" value="<?php echo $h["supplier_name"]?>" autocomplete="off">
-						<datalist class="inv" id="suppliers">
+						<input class="inv" type="text" list="suppliersDatalist[<?php echo $i; ?>]" name="supplier[<?php echo $i; ?>]" value="<?php echo $h["supplier_name"]?>" autocomplete="off">
+						<datalist class="inv" id="suppliersDatalist[<?php echo $i; ?>]">
 							<?php
 								foreach($assetSuppliers as  $m)
 								{
@@ -191,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 					</td>
 					<td class="inv"><input class="inv" name="PO[<?php echo $i; ?>]" placeholder="PO" value="<?php echo $h["po"]?>" autocomplete="off"></td>
 					<td class="inv"><input type="date" class="inv" name="date_supplied[<?php echo $i; ?>]" value="<?php $date = DateTime::createFromFormat('Y-m-d', $h["date_supplied"]); echo $date->format('d.m.Y'); ?>" autocomplete="off"></td>
-					<td class="inv" rowspan="1" colspan="2">
+					<td class="inv">
 						<textarea class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"><?php echo $h["note"]?></textarea>
 					</td>
 					</tr>
@@ -207,7 +207,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 		<input type="submit" value="Save" name="Save">
 		</form>
 	</main>
-	<?php include 'src/footer.php' ?> 
+	<?php include './src/footer.php' ?> 
 
 </body>
 

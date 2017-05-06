@@ -36,58 +36,64 @@ function findSQLArray($arr, $n, $i)		//returns true if $_POST[$n][$i] exists in 
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-	//var_dump($_POST);
-	echo "<br>";
-	for($i = 0 ; $i < $emptyRows ; $i++)
-	{
-		if($_POST['manufacturer'][$i] != null && $_POST['model'][$i] != null && $_POST['serial'][$i] != null && $_POST['supplier'][$i] != null && $_POST['date_supplied'][$i] != null) //check if all required values are present
-		{
-			
-			if(!findSQLArray($assetManufacturers, 'manufacturer', $i)) 	//If manufacturer does not exist, add new to DB
-			{
-				echo $_POST['manufacturer'][$i] . ' not in list, adding to DB<br>'; 
-				$sql->addManufacturer($_POST['manufacturer'][$i]);			//add new manufacturer to DB
-				$assetManufacturers = $sql->getManufacturers();				//and refresh list of manufacturers
-			}
-			
-			if(!findSQLArray($assetSuppliers, 'supplier', $i))				//If supplier does not exist, add new to DB
-			{
-				echo $_POST['supplier'][$i] . ' not in list, adding to DB<br>'; 
-				$sql->addSupplier($_POST['supplier'][$i]);					//add new supplier to DB
-				$assetSuppliers = $sql->getSuppliers();						//and refresh list of suppliers
-			}
-			
-			if($date = DateTime::createFromFormat('m.d.Y', $_POST['date_supplied'][$i]))
-			{
-				$dateSQL = $date->format('Y-m-d');
-			}
-			else if($date = DateTime::createFromFormat('Y-m-d', $_POST['date_supplied'][$i]))
-			{
-				$dateSQL = $date->format('Y-m-d');
-			}
-			else
-			{				
-				echo "bad dateformat, using today's date";
-				$dateSQL = date('Y-m-d', time());
-			}
-			
-			
-			//echo 'inserting '. $_POST['gvl_gdvt'][$i] . ' |' . $_POST['type'][$i] . '| |' . $_POST['manufacturer'][$i] . '| |' . $_POST['model'][$i] . '| |' . $_POST['serial'][$i] . '| |' . $_POST['supplier'][$i] . '| |' .  $dateSQL . '| |' . $_POST['note'][$i]  . '| |' .  $_POST['PO'][$i] . "|";
-			if($_POST['PO'][$i] == '')
-			{
-				$_POST['PO'][$i] = null;
-			}
-			$sql->addHW($_POST['gvl_gdvt'][$i], $_POST['type'][$i], $_POST['manufacturer'][$i], $_POST['model'][$i], $_POST['serial'][$i], $_POST['supplier'][$i], $_POST['PO'][$i], $dateSQL, $_POST['note'][$i]);
 
-			
-			$hw = $sql->getHW();
-			
+	if(isset($_POST["save"]))
+	{
+		for($i = 0 ; $i < $emptyRows ; $i++)
+		{
+			if($_POST['manufacturer'][$i] != null && $_POST['model'][$i] != null && $_POST['serial'][$i] != null && $_POST['supplier'][$i] != null && $_POST['date_supplied'][$i] != null) //check if all required values are present
+			{
+				
+				if(!findSQLArray($assetManufacturers, 'manufacturer', $i)) 	//If manufacturer does not exist, add new to DB
+				{
+					echo $_POST['manufacturer'][$i] . ' not in list, adding to DB<br>'; 
+					$sql->addManufacturer($_POST['manufacturer'][$i]);			//add new manufacturer to DB
+					$assetManufacturers = $sql->getManufacturers();				//and refresh list of manufacturers
+				}
+				
+				if(!findSQLArray($assetSuppliers, 'supplier', $i))				//If supplier does not exist, add new to DB
+				{
+					echo $_POST['supplier'][$i] . ' not in list, adding to DB<br>'; 
+					$sql->addSupplier($_POST['supplier'][$i]);					//add new supplier to DB
+					$assetSuppliers = $sql->getSuppliers();						//and refresh list of suppliers
+				}
+				
+				if($date = DateTime::createFromFormat('m.d.Y', $_POST['date_supplied'][$i]))
+				{
+					$dateSQL = $date->format('Y-m-d');
+				}
+				else if($date = DateTime::createFromFormat('Y-m-d', $_POST['date_supplied'][$i]))
+				{
+					$dateSQL = $date->format('Y-m-d');
+				}
+				else
+				{				
+					echo "bad dateformat, using today's date";
+					$dateSQL = date('Y-m-d', time());
+				}
+				
+				
+				//echo 'inserting '. $_POST['gvl_gdvt'][$i] . ' |' . $_POST['type'][$i] . '| |' . $_POST['manufacturer'][$i] . '| |' . $_POST['model'][$i] . '| |' . $_POST['serial'][$i] . '| |' . $_POST['supplier'][$i] . '| |' .  $dateSQL . '| |' . $_POST['note'][$i]  . '| |' .  $_POST['PO'][$i] . "|";
+				if($_POST['PO'][$i] == '')
+				{
+					$_POST['PO'][$i] = null;
+				}
+				$sql->addHW($_POST['gvl_gdvt'][$i], $_POST['type'][$i], $_POST['manufacturer'][$i], $_POST['model'][$i], $_POST['serial'][$i], $_POST['supplier'][$i], $_POST['PO'][$i], $dateSQL, $_POST['note'][$i]);
+
+				
+				$hw = $sql->getHW();
+				
+			}
 		}
+		$assetManufacturers = $sql->getManufacturers();
+		$assetSuppliers = $sql->getSuppliers();
+		$hw = $sql->getHW();
 	}
-	$assetManufacturers = $sql->getManufacturers();
-	$assetSuppliers = $sql->getSuppliers();
-	$hw = $sql->getHW();
-	unset($_POST);
+	
+	if(isset($_POST["freeRows"]))
+	{
+		$emptyRows = $_POST["freeRows"];
+	}
 	
 }
 
@@ -105,7 +111,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<link rel="stylesheet" type="text/css" href="./styles.css">
 	
 	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-	<script src="/src/addHWScripts.js" type="text/javascript"></script>
+	<script src="./src/addHWScripts.js" type="text/javascript"></script>
 	
 	<script>
 	// after dom is loaded go to the end of the page
@@ -121,7 +127,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	<header>
 		<h1>Hardware</h1>
 		
-		<?php include 'src/navbar.php' ?>
+		<?php include './src/navbar.php' ?>
 	
 	</header>
 	<main>
@@ -129,14 +135,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		<table class="new_HW_table">
 			<thead>
 			<tr class="table_header">
-				<th>inventory</th>
+				<th>Inventory</th>
 				<th>Type</th>
-				<th>Manufacturer</th>
-				<th>Model</th>
-				<th>Serial</th>
-				<th>Supplier</th>
+				<th>Manufacturer*</th>
+				<th>Model*</th>
+				<th>Serial*</th>
+				<th>Supplier*</th>
 				<th>PO</th>
-				<th>Date delivered</th>
+				<th>Date delivered*</th>
 				<th>Note</th>
 				<th>
 					<button type="button" value="editAll" name="buttonEditAll" onclick="editAll()">edit all</button>
@@ -147,14 +153,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 			<tfoot>
 			<tr class="table_header">
-				<th>inventory</th>
+				<th>Inventory</th>
 				<th>Type</th>
-				<th>Manufacturer</th>
-				<th>Model</th>
-				<th>Serial</th>
-				<th>Supplier</th>
+				<th>Manufacturer*</th>
+				<th>Model*</th>
+				<th>Serial*</th>
+				<th>Supplier*</th>
 				<th>PO</th>
-				<th>Date delivered</th>
+				<th>Date delivered*</th>
 				<th>Note</th>
 				<th>
 					<button type="button" value="editAll" name="buttonEditAll" onclick="editAll()">edit all</button>
@@ -204,8 +210,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					</select>
 				</td>
 				<td class="inv">
-					<input class="inv" list="manufacturer" name="manufacturer[0]" autocomplete="off">
-					<datalist  class="inv" id="manufacturer">
+					<input class="inv" list="manufacturerDatalist[0]" name="manufacturer[0]" autocomplete="off">
+					<datalist  class="inv" id="manufacturerDatalist[0]">
 						<?php
 							foreach($assetManufacturers as  $m)
 							{
@@ -221,8 +227,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					<input type="text" class="inv" name="serial[0]" placeholder="Serial No." autocomplete="off" onkeypress="return event.keyCode != 13;">
 				</td>
 				<td class="inv">
-					<input type="text" class="inv" list="suppliers" name="supplier[0]" autocomplete="off">
-					<datalist class="inv" id="suppliers">
+					<input type="text" list="suppliersDatalist[0]" class="inv" name="supplier[0]" autocomplete="off">
+					<datalist class="inv" id="suppliersDatalist[0]">
 						<?php
 							foreach($assetSuppliers as  $m)
 							{
@@ -232,7 +238,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					</datalist>
 				</td>
 				<td class="inv"><input type="text" name="PO[0]" class="inv" placeholder="PO" autocomplete="off" onkeypress="return event.keyCode != 13;"></td>
-				<td class="inv"><input type="date" class="inv" name="date_supplied[0]" autocomplete="off" placeholder="mm.dd.yyy"></td>
+				<td class="inv"><input type="date" class="inv" name="date_supplied[0]" autocomplete="off" placeholder="mm.dd.yyy"></td>		<!--placeholder is for FF compatibility!-->
 				<td class="inv" rowspan="1" colspan="2">
 					<textarea class="inv" name="note[0]" rows="1" cols="10"></textarea>
 				</td>
@@ -258,8 +264,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					</select>
 				</td>
 				<td class="inv">
-					<input  class="inv" list="manufacturer" name="manufacturer[<?php echo $i; ?>]" autocomplete="off">
-					<datalist id="manufacturer">
+					<input  class="inv" list="manufacturerDatalist[<?php echo $i; ?>]" name="manufacturer[<?php echo $i; ?>]" autocomplete="off">
+					<datalist id="manufacturerDatalist[<?php echo $i; ?>]">
 						<?php
 							foreach($assetManufacturers as  $m)
 							{
@@ -275,8 +281,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					<input class="inv" name="serial[<?php echo $i; ?>]" placeholder="Serial No." autocomplete="off">
 				</td>
 				<td class="inv">
-					<input class="inv" type="text" list="suppliers" name="supplier[<?php echo $i; ?>]" autocomplete="off">
-					<datalist class="inv" id="suppliers">
+					<input class="inv" type="text" list="suppliersDatalist[<?php echo $i; ?>]" name="supplier[<?php echo $i; ?>]" autocomplete="off">
+					<datalist class="inv" id="suppliersDatalist[<?php echo $i; ?>]">
 						<?php
 							foreach($assetSuppliers as  $m)
 							{
@@ -286,7 +292,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					</datalist>
 				</td>
 				<td class="inv"><input class="inv" name="PO[<?php echo $i; ?>]" placeholder="PO" autocomplete="off"></td>
-				<td class="inv"><input type="date" class="inv" name="date_supplied[<?php echo $i; ?>]" placeholder="mm.dd.yyy" autocomplete="off"></td>
+				<td class="inv"><input type="date" class="inv" name="date_supplied[<?php echo $i; ?>]" placeholder="mm.dd.yyy" autocomplete="off"></td> <!--placeholder is for FF compatibility!-->
 				<td class="inv" rowspan="1" colspan="2">
 					<textarea class="inv" name="note[<?php echo $i; ?>]" rows="1" cols="10"></textarea>
 				</td>
@@ -296,10 +302,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		</tbody>
 		</table>
 		
-		<input type="submit" value="Add HW">
+		<input class="left" type="submit" name="save" value="Add HW">
+		<input class="right" type="number" name="freeRows" min="5" max="30" value="<?php echo $emptyRows;?>">
 		</form>
 	</main>
-	<?php include 'src/footer.php' ?>
+	<?php include './src/footer.php' ?>
   
 </body>
 

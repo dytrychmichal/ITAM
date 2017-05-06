@@ -1,13 +1,15 @@
 <?php
-
 class SQL
 {
 	public function logIn($sso, $pass)
 	{
 			require ('db.php');
+			require_once('passwordLib.php');
+			
+			
 			$stmtusr = $db->prepare("select pwd from itam.user where upper(sso)=upper(:sso)");                  
 			$stmtusr->execute(array(':sso' => $sso));
-			$passDB = $stmtusr->fetchColumn();
+			$passDB = $stmtusr->fetchColumn();	
 			return password_verify($pass, $passDB);
 	}
 	
@@ -330,6 +332,12 @@ class SQL
 			$stmt = $db->prepare("insert into itam.ownership (asset_id, date_created, note, from_user, user_id, created_by) values(:asset, :date, :note, :userO, :userN, :author)");   
 			$stmt->execute(array(':asset' => $aID, ':date' => $date, ':note' => $note, ':userO' => $ssoOld, 'userN'=>$ssoNew, ':author' => $author));
 			
+			$stmtI = $db->prepare("select max(id) from itam.ownership");
+			$stmtI->execute();
+			$inv = $stmtI->fetch();
+			
+			return $inv[0];
+			
 		}
 		catch (PDOException $e)
 		{
@@ -358,6 +366,12 @@ class SQL
 			//and now for the insertion
 			$stmt = $db->prepare("insert into itam.ownership (asset_id, date_created, note, user_id, created_by) values(:asset, :date, :note, :user, :author)");   
 			$stmt->execute(array(':asset' => $aID, ':date' => date('Y-m-d'), ':note' => $note, ':user' => $sso, ':author' => $author));
+			
+			$stmtI = $db->prepare("select max(id) from itam.ownership");
+			$stmtI->execute();
+			$inv = $stmtI->fetch();
+			
+			return $inv[0];
 		}
 		catch (PDOException $e)
 		{

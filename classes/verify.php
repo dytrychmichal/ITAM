@@ -9,7 +9,7 @@
 	  } 
 	  if(!isset($_SESSION['name']))
 	  {
-		  header('Location: ../login.php');
+		  header('Location: http://sorry.vse.cz/~dytm01/login.php');
 	  }
 	}  
 

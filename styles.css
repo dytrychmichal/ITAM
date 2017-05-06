@@ -56,6 +56,7 @@ textarea
 textarea:focus
 {
     height: 4em;
+	width: 20em;
 }
 
 table
@@ -110,13 +111,20 @@ li a:hover {
 
 div.left {
     display: inline-block;	
-	padding-top:5px;
+	padding-top: 5px;
 	margin-top: 5px;
+	margin-right: 5px;
 }
+
 div.right {
     display: inline-block;
-	padding-top:5px;
+	padding-top: 5px;
 	margin-top: 5px;
+}
+
+div.left > p
+{
+	height: 1.75em;
 }
 
 tr:nth-child(even):not(.inv):not(.buttonTd), th
@@ -161,6 +169,17 @@ button
 }
 
 input
-{
+{	
+		margin-top: 20px;
       font-family: sans-serif;                
+}
+
+input.left
+{
+	float:left;
+}
+
+input.right
+{
+	float:right;
 }
